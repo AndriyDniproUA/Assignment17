@@ -1,6 +1,11 @@
 package com.savytskyy.contactservices;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.savytskyy.contactservices.annotations.SystemProp;
+import com.savytskyy.contactservices.config.AppConfiguration;
+import com.savytskyy.contactservices.config.AppProperties;
+import com.savytskyy.contactservices.config.ConfigLoader;
+import com.savytskyy.contactservices.dto.contacts.AddContactRequest;
 import com.savytskyy.contactservices.entities.Contact;
 import com.savytskyy.contactservices.entities.User;
 import com.savytskyy.contactservices.menu.contactsmenu.*;
@@ -15,8 +20,8 @@ import com.savytskyy.contactservices.utils.ContactSerializer;
 import com.savytskyy.contactservices.utils.DefaultContactSerializer;
 import com.savytskyy.contactservices.utils.NioFileUtil;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.*;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -26,43 +31,37 @@ import java.util.function.Consumer;
 
 public class Main {
     public static void main(String[] args) {
-        String profile = System.getProperty("contactbook.profile");
-        UsersService usersService=null;
-        ContactsService contactsService=null;
+        ConfigLoader configLoader = new ConfigLoader();
+        AppProperties p = configLoader.getSystemProps(AppProperties.class);
+        String configFileName = "app-" + p.getProfile() + ".properties";
+        AppConfiguration config = configLoader
+                .getFileProps(AppConfiguration.class, configFileName);
+
+        String mode = config.getWorkMode();
+        String baseURI = config.getBaseURI();
+        String filePath = config.getFilePath();
+
+        UsersService usersService = null;
+        ContactsService contactsService = null;
 
 
-        String configurationFile = null;
-        if (profile.equals("dev")) configurationFile = "app-dev.properties";
-        if (profile.equals("prod")) configurationFile = "app-prod.properties";
-
-        Properties sprop = new Properties();
-        try {
-            sprop.load(new FileInputStream(configurationFile));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        String workMode = sprop.getProperty("app.service.workmode");
-        String baseURI = sprop.getProperty("api.base-uri");
-        String filePath = sprop.getProperty("file.path");
-
-        if (workMode.equals("api")) {
+        if (mode.equals("api")) {
             System.out.println("Starting online (API) contact manager...");
             ObjectMapper mapper = new ObjectMapper();
             HttpClient client = HttpClient.newBuilder().build();
             usersService = new ApiUsersService(baseURI, mapper, client);
             contactsService = new ApiContactsService(usersService, mapper, client, baseURI);
-        } else if (workMode.equals("file")) {
+        } else if (mode.equals("file")) {
             System.out.println("Starting NIO file contact manager...");
             ContactSerializer contactSerializer = new DefaultContactSerializer();
             usersService = new DummyUsersService();
             contactsService = new NioFileContactsService(contactSerializer, filePath);
-        } else if (workMode.equals("memory")) {
+        } else if (mode.equals("memory")) {
             System.out.println("Starting in memory (RAM) contact manager...");
             usersService = new DummyUsersService();
             contactsService = new InMemoryContactsService();
         } else {
-            throw new RuntimeException(workMode+" is not supported work mode!");
+            throw new RuntimeException(mode + " is not supported work mode!");
         }
 
 //            //FOR File service
@@ -86,6 +85,8 @@ public class Main {
         menu.run();
     }
 }
+
+
 
 
 
