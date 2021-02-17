@@ -10,6 +10,7 @@ import com.savytskyy.contactservices.dto.users.LoginResponse;
 import com.savytskyy.contactservices.dto.users.RegistrationRequest;
 import com.savytskyy.contactservices.entities.Contact;
 import com.savytskyy.contactservices.entities.User;
+import com.savytskyy.contactservices.factories.HttpRequestCreator;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
@@ -55,6 +56,7 @@ public class ApiUsersService implements UsersService {
         regRequest.setPassword(user.getPassword());
         regRequest.setDateBorn(user.getDateOfBirth().toString());
         try {
+            //HttpRequest httpRequest = httpRequestFactory.createPostRequest("/register", regRequest);
             HttpRequest httpRequest = createHttpRequest("/register", regRequest);
             HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
@@ -80,7 +82,9 @@ public class ApiUsersService implements UsersService {
         logRequest.setPassword(user.getPassword());
 
         try {
-           HttpRequest httpRequest = createHttpRequest("/login", logRequest);
+            HttpRequest httpRequest = createHttpRequest("/login", logRequest);
+            //HttpRequest httpRequest = httpRequestFactory.createPostRequest("/login", logRequest);
+
            HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             LoginResponse response = mapper.readValue(
                     httpResponse.body(),
@@ -101,11 +105,10 @@ public class ApiUsersService implements UsersService {
 
     @Override
     public List<User> getAll() {
+        //HttpRequest httpRequest = httpRequestFactory.createGetRequest("/users");
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(baseURI + "/users"))
-                //.uri(URI.create(baseURI + "/users2"))
                 .GET()
-                //.header("Authorization", "Bearer " + getToken())
                 .header("Content-Type", "application/json")
                 .build();
 

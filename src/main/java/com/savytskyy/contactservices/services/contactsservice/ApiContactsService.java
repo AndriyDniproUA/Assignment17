@@ -1,6 +1,5 @@
 package com.savytskyy.contactservices.services.contactsservice;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savytskyy.contactservices.dto.GetStatusResponse;
 import com.savytskyy.contactservices.dto.contacts.AddContactRequest;
@@ -8,11 +7,10 @@ import com.savytskyy.contactservices.dto.contacts.FindContactByNameRequest;
 import com.savytskyy.contactservices.dto.contacts.FindContactByValueRequest;
 import com.savytskyy.contactservices.dto.contacts.GetContactsResponse;
 import com.savytskyy.contactservices.entities.Contact;
-import com.savytskyy.contactservices.services.usersservice.UsersService;
+import com.savytskyy.contactservices.factories.HttpRequestCreator;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -22,11 +20,11 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class ApiContactsService implements ContactsService {
-    private final UsersService usersService;
+    //private final UsersService usersService;
     private final ObjectMapper mapper;
     private final HttpClient client;
-    private final String baseURI;
-
+    //private final String baseURI;
+    private final HttpRequestCreator httpRequestCreator;
 
     @Override
     public void add(Contact contact) {
@@ -36,7 +34,7 @@ public class ApiContactsService implements ContactsService {
         request.setValue(contact.getValue());
 
         try {
-            HttpRequest httpRequest = createAuthorizedRequest("/contacts/add", request);
+            HttpRequest httpRequest = httpRequestCreator.createAuthorizedPostRequest("/contacts/add",request);
             HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             GetStatusResponse response = mapper.readValue(httpResponse.body(), GetStatusResponse.class);
             if (response.getStatus().equals("error")) {
@@ -61,11 +59,9 @@ public class ApiContactsService implements ContactsService {
         System.out.println(request);
 
         try {
-            HttpRequest httpRequest = createAuthorizedRequest("/contacts/find", request);
+            HttpRequest httpRequest = httpRequestCreator.createAuthorizedPostRequest("/contacts/find", request);
             HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             GetContactsResponse response = mapper.readValue(httpResponse.body(), GetContactsResponse.class);
-
-            //System.out.println(response);
 
             if (response.getStatus().equals("error")) {
                 throw new RuntimeException("contact not found!" + response.getError());
@@ -92,7 +88,8 @@ public class ApiContactsService implements ContactsService {
         request.setValue(value);
 
         try {
-            HttpRequest httpRequest = createAuthorizedRequest("/contacts/find", request);
+            HttpRequest httpRequest = httpRequestCreator.createAuthorizedPostRequest("/contacts/find", request);
+
             HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             GetContactsResponse response = mapper.readValue(httpResponse.body(), GetContactsResponse.class);
             if (response.getStatus().equals("error")) {
@@ -116,12 +113,7 @@ public class ApiContactsService implements ContactsService {
 
     @Override
     public List<Contact> getAll() {
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create(baseURI + "/contacts"))
-                .GET()
-                .header("Authorization", "Bearer " + usersService.getToken())
-                .header("Content-Type", "application/json")
-                .build();
+        HttpRequest httpRequest = httpRequestCreator.createAuthorizedGetRequest("/contacts");
 
         try {
             HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -146,12 +138,12 @@ public class ApiContactsService implements ContactsService {
         return Collections.emptyList();
     }
 
-    private HttpRequest createAuthorizedRequest(String uri, Object request) throws JsonProcessingException {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(baseURI + uri))
-                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
-                .header("Authorization", "Bearer " + usersService.getToken())
-                .header("Content-Type", "application/json")
-                .build();
-    }
+//    private HttpRequest createAuthorizedRequest(String uri, Object request) throws JsonProcessingException {
+//        return HttpRequest.newBuilder()
+//                .uri(URI.create(baseURI + uri))
+//                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
+//                .header("Authorization", "Bearer " + usersService.getToken())
+//                .header("Content-Type", "application/json")
+//                .build();
+//    }
 }

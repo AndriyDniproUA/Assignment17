@@ -97,7 +97,7 @@
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.savytskyy.Lesson4.Phonebook.menu.Main</mainClass>
+                            <mainClass>com.savytskyy.contactservices.menu.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

@@ -1,33 +1,19 @@
 package com.savytskyy.contactservices;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.savytskyy.contactservices.annotations.SystemProp;
 import com.savytskyy.contactservices.config.AppConfiguration;
 import com.savytskyy.contactservices.config.AppProperties;
 import com.savytskyy.contactservices.config.ConfigLoader;
-import com.savytskyy.contactservices.dto.contacts.AddContactRequest;
-import com.savytskyy.contactservices.entities.Contact;
-import com.savytskyy.contactservices.entities.User;
+import com.savytskyy.contactservices.factories.*;
 import com.savytskyy.contactservices.menu.contactsmenu.*;
 import com.savytskyy.contactservices.menu.usersmenu.LoginUserMenuItem;
 import com.savytskyy.contactservices.menu.usersmenu.ReadAllUsersMenuItem;
 import com.savytskyy.contactservices.menu.usersmenu.RegisterUserMenuItem;
 import com.savytskyy.contactservices.services.contactsservice.*;
-import com.savytskyy.contactservices.services.usersservice.ApiUsersService;
-import com.savytskyy.contactservices.services.usersservice.DummyUsersService;
 import com.savytskyy.contactservices.services.usersservice.UsersService;
-import com.savytskyy.contactservices.utils.ContactSerializer;
-import com.savytskyy.contactservices.utils.DefaultContactSerializer;
-import com.savytskyy.contactservices.utils.NioFileUtil;
+import com.savytskyy.contactservices.utils.*;
 
-import java.io.*;
-import java.lang.reflect.*;
 import java.net.http.HttpClient;
-import java.nio.file.Path;
-import java.time.LocalDate;
-import java.util.Properties;
-import java.util.Scanner;
-import java.util.function.Consumer;
 
 public class Main {
     public static void main(String[] args) {
@@ -41,25 +27,41 @@ public class Main {
         String baseURI = config.getBaseURI();
         String filePath = config.getFilePath();
 
+        ObjectMapper mapper = new ObjectMapper();
+        HttpClient client = HttpClient.newBuilder().build();
+
+        UserServiceCreator userServiceFactory = new UserServiceFactory(baseURI,mapper,client);
+        ContactServiceCreator contactServiceFactory = new ContactServiceFactory();
+
+
         UsersService usersService = null;
         ContactsService contactsService = null;
 
 
         if (mode.equals("api")) {
             System.out.println("Starting online (API) contact manager...");
-            ObjectMapper mapper = new ObjectMapper();
-            HttpClient client = HttpClient.newBuilder().build();
-            usersService = new ApiUsersService(baseURI, mapper, client);
-            contactsService = new ApiContactsService(usersService, mapper, client, baseURI);
+            usersService = userServiceFactory.createApiUserService();
+            HttpRequestCreator httpRequestCreator = new JsonHttpRequestFactory(usersService,mapper,baseURI);
+            contactsService = contactServiceFactory.createApiContactsService(mapper, client, httpRequestCreator);
+
+            //usersService = new ApiUsersService(baseURI, mapper, client);
+            //contactsService = new ApiContactsService(mapper, client, httpRequestFactory);
+
         } else if (mode.equals("file")) {
             System.out.println("Starting NIO file contact manager...");
             ContactSerializer contactSerializer = new DefaultContactSerializer();
-            usersService = new DummyUsersService();
-            contactsService = new NioFileContactsService(contactSerializer, filePath);
+            usersService = userServiceFactory.createDummyUsersService();
+            contactsService = contactServiceFactory.createNioFileContactsService(contactSerializer,filePath);
+
+            //usersService = new DummyUsersService();
+            //contactsService = new NioFileContactsService(contactSerializer, filePath);
+
         } else if (mode.equals("memory")) {
             System.out.println("Starting in memory (RAM) contact manager...");
-            usersService = new DummyUsersService();
-            contactsService = new InMemoryContactsService();
+            usersService = userServiceFactory.createDummyUsersService();
+            contactsService = contactServiceFactory.createInMemoryContactsService();
+            //usersService = new DummyUsersService();
+            //contactsService = new InMemoryContactsService();
         } else {
             throw new RuntimeException(mode + " is not supported work mode!");
         }
