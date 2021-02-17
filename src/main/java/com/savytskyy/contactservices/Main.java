@@ -30,38 +30,38 @@ public class Main {
         ObjectMapper mapper = new ObjectMapper();
         HttpClient client = HttpClient.newBuilder().build();
 
-        UserServiceCreator userServiceFactory = new UserServiceFactory(baseURI,mapper,client);
-        ContactServiceCreator contactServiceFactory = new ContactServiceFactory();
-
-
-        UsersService usersService = null;
-        ContactsService contactsService = null;
+        //UserServiceCreator userServiceFactory = new UserServiceFactory(baseURI,mapper,client);
+        //ContactServiceCreator contactServiceFactory = new ContactServiceFactory();
+        //UsersService usersService = null;
+        //ContactsService contactsService = null;
+        ServiceFactory serviceFactory;
+        UsersService usersService;
+        ContactsService contactsService;
 
 
         if (mode.equals("api")) {
             System.out.println("Starting online (API) contact manager...");
-            usersService = userServiceFactory.createApiUserService();
-            HttpRequestCreator httpRequestCreator = new JsonHttpRequestFactory(usersService,mapper,baseURI);
-            contactsService = contactServiceFactory.createApiContactsService(mapper, client, httpRequestCreator);
+            //HttpRequestCreator httpRequestCreator = new JsonHttpRequestFactory(mapper,baseURI);
 
-            //usersService = new ApiUsersService(baseURI, mapper, client);
-            //contactsService = new ApiContactsService(mapper, client, httpRequestFactory);
+            serviceFactory = new ApiServicesFactory(baseURI,mapper,client);
+//            usersService = serviceFactory.createUserService();
+//            contactsService = serviceFactory.createContactService();
 
         } else if (mode.equals("file")) {
             System.out.println("Starting NIO file contact manager...");
             ContactSerializer contactSerializer = new DefaultContactSerializer();
-            usersService = userServiceFactory.createDummyUsersService();
-            contactsService = contactServiceFactory.createNioFileContactsService(contactSerializer,filePath);
 
-            //usersService = new DummyUsersService();
-            //contactsService = new NioFileContactsService(contactSerializer, filePath);
+            serviceFactory = new NioFileServicesFactory(contactSerializer,filePath);
+//            usersService = serviceFactory.createUserService();
+//            contactsService = serviceFactory.createContactService();
 
         } else if (mode.equals("memory")) {
             System.out.println("Starting in memory (RAM) contact manager...");
-            usersService = userServiceFactory.createDummyUsersService();
-            contactsService = contactServiceFactory.createInMemoryContactsService();
-            //usersService = new DummyUsersService();
-            //contactsService = new InMemoryContactsService();
+
+            serviceFactory = new InMemoryServicesFactory();
+//            usersService = serviceFactory.createUserService();
+//            contactsService = serviceFactory.createContactService();
+
         } else {
             throw new RuntimeException(mode + " is not supported work mode!");
         }
@@ -71,6 +71,9 @@ public class Main {
 //            String filePath = "contacts.txt";
 //            UsersService usersService = new DummyUsersService();
 //            ContactsService contactsService = new FileContactsService(contactSerializer,filePath);
+
+        usersService = serviceFactory.createUserService();
+        contactsService = serviceFactory.createContactService();
 
         Menu menu = new Menu();
         menu.addMenuItem(new ReadAllContactsMenuItem(usersService, contactsService));

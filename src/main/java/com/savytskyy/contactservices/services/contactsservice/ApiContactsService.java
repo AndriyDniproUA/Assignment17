@@ -1,5 +1,6 @@
 package com.savytskyy.contactservices.services.contactsservice;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.savytskyy.contactservices.dto.GetStatusResponse;
 import com.savytskyy.contactservices.dto.contacts.AddContactRequest;
@@ -8,6 +9,7 @@ import com.savytskyy.contactservices.dto.contacts.FindContactByValueRequest;
 import com.savytskyy.contactservices.dto.contacts.GetContactsResponse;
 import com.savytskyy.contactservices.entities.Contact;
 import com.savytskyy.contactservices.factories.HttpRequestCreator;
+import com.savytskyy.contactservices.services.usersservice.UsersService;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
@@ -20,7 +22,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class ApiContactsService implements ContactsService {
-    //private final UsersService usersService;
+    private final UsersService usersService;
     private final ObjectMapper mapper;
     private final HttpClient client;
     //private final String baseURI;

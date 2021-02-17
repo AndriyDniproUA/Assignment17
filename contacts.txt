@@ -75,7 +75,6 @@
 80[email:Саш��|fff@ukr.net]
 81[email:Саша|fff@ukr.net]
 84[email:Саша|fff@ukr.net]
-85[email:Саша|fff@ukr.net]
 86[email:Саша|fff@ukr.net]
 89[email:Bob|bob@gmail.com]
 90[email:july|jul@gmail.com]

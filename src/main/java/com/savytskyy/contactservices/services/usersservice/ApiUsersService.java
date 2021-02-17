@@ -32,6 +32,7 @@ public class ApiUsersService implements UsersService {
     private final String baseURI;
     private final ObjectMapper mapper;
     private final HttpClient client;
+    private final HttpRequestCreator httpRequestFactory;
 
     private String token;
     private LocalDateTime ldt;
@@ -56,8 +57,8 @@ public class ApiUsersService implements UsersService {
         regRequest.setPassword(user.getPassword());
         regRequest.setDateBorn(user.getDateOfBirth().toString());
         try {
-            //HttpRequest httpRequest = httpRequestFactory.createPostRequest("/register", regRequest);
-            HttpRequest httpRequest = createHttpRequest("/register", regRequest);
+            HttpRequest httpRequest = httpRequestFactory.createPostRequest("/register", regRequest);
+            //HttpRequest httpRequest = createHttpRequest("/register", regRequest);
             HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             GetStatusResponse response = mapper.readValue(
@@ -82,8 +83,10 @@ public class ApiUsersService implements UsersService {
         logRequest.setPassword(user.getPassword());
 
         try {
-            HttpRequest httpRequest = createHttpRequest("/login", logRequest);
-            //HttpRequest httpRequest = httpRequestFactory.createPostRequest("/login", logRequest);
+
+            HttpRequest httpRequest = httpRequestFactory.createPostRequest("/login", logRequest);
+            //HttpRequest httpRequest = createHttpRequest("/login", logRequest);
+
 
            HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             LoginResponse response = mapper.readValue(
@@ -105,12 +108,12 @@ public class ApiUsersService implements UsersService {
 
     @Override
     public List<User> getAll() {
-        //HttpRequest httpRequest = httpRequestFactory.createGetRequest("/users");
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create(baseURI + "/users"))
-                .GET()
-                .header("Content-Type", "application/json")
-                .build();
+        HttpRequest httpRequest = httpRequestFactory.createGetRequest("/users");
+//        HttpRequest httpRequest = HttpRequest.newBuilder()
+//                .uri(URI.create(baseURI + "/users"))
+//                .GET()
+//                .header("Content-Type", "application/json")
+//                .build();
 
         try {
             HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -132,14 +135,14 @@ public class ApiUsersService implements UsersService {
         return Collections.emptyList();
     }
 
-    private HttpRequest createHttpRequest(String uri, Object request) throws JsonProcessingException {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(baseURI + uri))
-                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
-                .header("Content-Type", "application/json")
-                .header("Accept","application/json")
-                .build();
-    }
+//    private HttpRequest createHttpRequest(String uri, Object request) throws JsonProcessingException {
+//        return HttpRequest.newBuilder()
+//                .uri(URI.create(baseURI + uri))
+//                .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
+//                .header("Content-Type", "application/json")
+//                .header("Accept","application/json")
+//                .build();
+//    }
 }
 
 

@@ -25,13 +25,36 @@ public class JsonHttpRequestFactory implements HttpRequestCreator {
     }
 
     @Override
-    public HttpRequest createAuthorizedPostRequest(String url, Object request) {
+    public HttpRequest createAuthorizedPostRequest(String url, Object obj) {
         try {
             return HttpRequest.newBuilder()
                     .uri(URI.create(baseURI + url))
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(request)))
+                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(obj)))
                     .header("Authorization", "Bearer " + usersService.getToken())
                     .header("Content-Type", "application/json")
+                    .build();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public HttpRequest createGetRequest(String url) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(baseURI + url))
+                .GET()
+                .header("Content-Type", "application/json")
+                .build();
+    }
+
+    @Override
+    public HttpRequest createPostRequest(String url, Object obj) {
+        try {
+            return HttpRequest.newBuilder()
+                    .uri(URI.create(baseURI + url))
+                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(obj)))
+                                        .header("Content-Type", "application/json")
                     .build();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
