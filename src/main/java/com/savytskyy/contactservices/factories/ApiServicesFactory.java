@@ -35,6 +35,7 @@ public class ApiServicesFactory implements ServiceFactory{
     @Override
     public ContactsService createContactService() {
         if (contactsService==null) {
+            usersService = createUserService();
             contactsService = new ApiContactsService(usersService,mapper,client,
                     new JsonHttpRequestFactory(usersService,mapper,baseURI));
         }
