@@ -17,24 +17,28 @@ public class ApiServicesFactory implements ServiceFactory{
     private final ObjectMapper mapper;
     private final HttpClient client;
 
-    private UsersService usersService;
-    HttpRequestCreator httpRequestFactory;
+    private UsersService usersService=null;
+    private ContactsService contactsService=null;
+    private HttpRequestCreator httpRequestFactory;
 
     //private final HttpRequestCreator httpRequestCreator;
     //private final static UsersService usersService=new ApiUsersService(baseURI, mapper,client);
 
     @Override
     public UsersService createUserService() {
-        httpRequestFactory = new JsonHttpRequestFactory(usersService,mapper,baseURI);
-        usersService = new ApiUsersService(baseURI, mapper, client,httpRequestFactory);
-        httpRequestFactory = new JsonHttpRequestFactory(usersService,mapper,baseURI);
+        if (usersService==null) {
+            usersService = new ApiUsersService(baseURI, mapper, client,new JsonHttpRequestFactory(null,mapper,baseURI));
+        }
         return usersService;
     }
 
     @Override
     public ContactsService createContactService() {
-        //usersService = new ApiUsersService(baseURI, mapper, client);
-        return new ApiContactsService(usersService,mapper,client,httpRequestFactory);
+        if (contactsService==null) {
+            contactsService = new ApiContactsService(usersService,mapper,client,
+                    new JsonHttpRequestFactory(usersService,mapper,baseURI));
+        }
+        return contactsService;
     }
 }
 
