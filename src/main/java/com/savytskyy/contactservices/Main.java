@@ -12,11 +12,15 @@ import com.savytskyy.contactservices.menu.usersmenu.RegisterUserMenuItem;
 import com.savytskyy.contactservices.services.contactsservice.*;
 import com.savytskyy.contactservices.services.usersservice.UsersService;
 import com.savytskyy.contactservices.utils.*;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
+import javax.sql.DataSource;
 import java.net.http.HttpClient;
 
 public class Main {
     public static void main(String[] args) {
+
         ConfigLoader configLoader = new ConfigLoader();
         AppProperties p = configLoader.getSystemProps(AppProperties.class);
         String configFileName = "app-" + p.getProfile() + ".properties";
@@ -30,10 +34,6 @@ public class Main {
         ObjectMapper mapper = new ObjectMapper();
         HttpClient client = HttpClient.newBuilder().build();
 
-        //UserServiceCreator userServiceFactory = new UserServiceFactory(baseURI,mapper,client);
-        //ContactServiceCreator contactServiceFactory = new ContactServiceFactory();
-        //UsersService usersService = null;
-        //ContactsService contactsService = null;
         ServiceFactory serviceFactory;
         UsersService usersService;
         ContactsService contactsService;
@@ -41,36 +41,39 @@ public class Main {
 
         if (mode.equals("api")) {
             System.out.println("Starting online (API) contact manager...");
-            //HttpRequestCreator httpRequestCreator = new JsonHttpRequestFactory(mapper,baseURI);
-
-            serviceFactory = new ApiServicesFactory(baseURI,mapper,client);
-//            usersService = serviceFactory.createUserService();
-//            contactsService = serviceFactory.createContactService();
+            serviceFactory = new ApiServicesFactory(baseURI, mapper, client);
 
         } else if (mode.equals("file")) {
             System.out.println("Starting NIO file contact manager...");
             ContactSerializer contactSerializer = new DefaultContactSerializer();
 
-            serviceFactory = new NioFileServicesFactory(contactSerializer,filePath);
-//            usersService = serviceFactory.createUserService();
-//            contactsService = serviceFactory.createContactService();
+            serviceFactory = new NioFileServicesFactory(contactSerializer, filePath);
 
         } else if (mode.equals("memory")) {
             System.out.println("Starting in memory (RAM) contact manager...");
 
             serviceFactory = new InMemoryServicesFactory();
-//            usersService = serviceFactory.createUserService();
-//            contactsService = serviceFactory.createContactService();
+
+        } else if (mode.equals("sql")) {
+            System.out.println("Starting database (SQL) contact manager...");
+
+            String dsn = "jdbc:postgresql://localhost:5432/contacts";
+            String user ="postgres";
+            String password="1234";
+
+            HikariConfig sqlConfig = new HikariConfig();
+            sqlConfig.setJdbcUrl(dsn);
+            sqlConfig.setUsername(user);
+            sqlConfig.setPassword(password);
+            sqlConfig.setMaximumPoolSize(8);
+            sqlConfig.setMinimumIdle(4);
+
+            DataSource dataSource = new HikariDataSource(sqlConfig);
+            serviceFactory = new SqlServicesFactory(dataSource);
 
         } else {
             throw new RuntimeException(mode + " is not supported work mode!");
         }
-
-//            //FOR File service
-//            ContactSerializer contactSerializer = new DefaultContactSerializer();
-//            String filePath = "contacts.txt";
-//            UsersService usersService = new DummyUsersService();
-//            ContactsService contactsService = new FileContactsService(contactSerializer,filePath);
 
         usersService = serviceFactory.createUserService();
         contactsService = serviceFactory.createContactService();
